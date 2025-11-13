@@ -46,6 +46,15 @@ const SubscriptionSchema = new mongoose.Schema({
   luchador: String,
 });
 
+// MODELO DE COMENTARIOS
+const CommentSchema = new mongoose.Schema({
+  fighterId: String,
+  name: String,
+  comment: String,
+  date: { type: Date, default: Date.now },
+});
+
+const Comment = mongoose.model("Comment", CommentSchema);
 const Registro = mongoose.model("Registro", RegistroSchema);
 const Subscription = mongoose.model("Subscription", SubscriptionSchema);
 
@@ -136,9 +145,30 @@ app.post("/api/unsubscribe", async (req, res) => {
   res.json({ message: "Suscripción cancelada correctamente" });
 });
 
+// OBTENER COMENTARIOS DE UN LUCHADOR
+app.get("/api/comments/:fighterId", async (req, res) => {
+  const { fighterId } = req.params;
+  const comments = await Comment.find({ fighterId }).sort({ date: -1 });
+  res.json(comments);
+});
+
+// GUARDAR COMENTARIO
+app.post("/api/comments", async (req, res) => {
+  const { fighterId, name, comment } = req.body;
+  if (!fighterId || !comment)
+    return res.status(400).json({ message: "Faltan datos" });
+
+  const newComment = new Comment({ fighterId, name, comment });
+  await newComment.save();
+  console.log("💬 Comentario guardado:", newComment);
+  res.status(201).json(newComment);
+});
+
 
 // SERVIDOR
 const PORT = 4000;
 app.listen(PORT, () =>
   console.log(`Servidor corriendo en http://localhost:${PORT}`)
 );
+
+
